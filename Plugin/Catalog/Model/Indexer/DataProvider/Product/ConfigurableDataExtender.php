@@ -13,16 +13,23 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
 
 
-class ConfigurableDataExtender implements DataProviderInterface{
+class ConfigurableDataExtender {
 
     /* @var CategoryResource $categoryResource */
     private $categoryResource;
+
+    public $storeId;
+
+    public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
+        $this->storeId = $storeId;
+    }
 
     /**
      * This method will take ES docs prepared by Divante Extension and modify them
      * before they are added to ES in \Divante\VsbridgeIndexerCore\Indexer\GenericIndexerHandler::saveIndex
      */
-    public function afterAddData(ConfigurableData $subject, $docs, $storeId){
+    public function afterAddData(ConfigurableData $subject, $docs){
+        $storeId = $this->storeId;
         $docs = $this->extendDataWithGallery($subject, $docs,$storeId);
 
         $objectManager = ObjectManager::getInstance();
