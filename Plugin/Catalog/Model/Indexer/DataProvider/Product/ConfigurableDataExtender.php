@@ -5,6 +5,7 @@ namespace CodingMice\VsBridgeIndexerExtension\Plugin\Catalog\Model\Indexer\DataP
 use Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category as CategoryResource;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\MediaGalleryData;
+use Divante\VsbridgeIndexerCore\Api\DataProviderInterface;
 use Divante\VsbridgeIndexerCore\Console\Command\RebuildEsIndexCommand;
 use Divante\VsbridgeIndexerCore\Config\IndicesSettings;
 use Magento\Framework\App\ObjectManager;
@@ -12,7 +13,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
 
 
-class ConfigurableDataExtender {
+class ConfigurableDataExtender implements DataProviderInterface{
 
     /* @var CategoryResource $categoryResource */
     private $categoryResource;

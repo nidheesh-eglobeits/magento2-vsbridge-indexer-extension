@@ -32,7 +32,7 @@
       "registration.php"
     ],
     "psr-4": {
-      "CodingMice\\VsbridgeIndexerExtension\\": ""
+      "CodingMice\\VsBridgeIndexerExtension\\": ""
     }
   },
   "minimum-stability": "dev",
