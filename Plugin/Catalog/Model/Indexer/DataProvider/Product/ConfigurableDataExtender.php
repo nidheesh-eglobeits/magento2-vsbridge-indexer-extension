@@ -37,7 +37,7 @@ class ConfigurableDataExtender {
         $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
-        return [$docs,$storeId];
+        return $docs;
     }
 
     private function cloneConfigurableColors($indexData,$storeId)
