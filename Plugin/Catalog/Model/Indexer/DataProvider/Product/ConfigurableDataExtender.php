@@ -15,21 +15,23 @@ use Magento\Store\Api\Data\StoreInterface;
 
 class ConfigurableDataExtender {
 
-    /* @var CategoryResource $categoryResource */
-    private $categoryResource;
-
     public $storeId;
 
     public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
         $this->storeId = $storeId;
     }
 
+    /* @var CategoryResource $categoryResource */
+    private $categoryResource;
+
     /**
      * This method will take ES docs prepared by Divante Extension and modify them
      * before they are added to ES in \Divante\VsbridgeIndexerCore\Indexer\GenericIndexerHandler::saveIndex
+     * @see: \Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData::addData
      */
     public function afterAddData(ConfigurableData $subject, $docs){
         $storeId = $this->storeId;
+
         $docs = $this->extendDataWithGallery($subject, $docs,$storeId);
 
         $objectManager = ObjectManager::getInstance();
@@ -37,6 +39,7 @@ class ConfigurableDataExtender {
         $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
+
         return $docs;
     }
 
@@ -193,8 +196,6 @@ class ConfigurableDataExtender {
 
     private function getCategoryData($storeId,$productId){
 
-
-
         $categories =  $this->categoryResource->loadCategoryData($storeId, [$productId]);
         $category_data = [
             'category' => [],
@@ -228,16 +229,19 @@ class ConfigurableDataExtender {
         /* make this work here */
         $mediaGalleryDataProvider = $type->getDataProvider('media_gallery');
 
-        $allChildren = $subject->configurableResource->getSimpleProducts($storeId);
+        $configurableResource = $subject->getConfigurableResource();
+        $configurableResource->setProducts($docs);
+
+        $allChildren = $configurableResource->getSimpleProducts($storeId);
 
         if (null === $allChildren) {
             return $docs;
         }
 
-        $stockRowData = $subject->loadInventory->execute($allChildren, $storeId);
-        $configurableAttributeCodes = $subject->configurableResource->getConfigurableAttributeCodes();
+        $stockRowData = $subject->getLoadInventory()->execute($allChildren, $storeId);
+        $configurableAttributeCodes = $subject->getConfigurableResource()->getConfigurableAttributeCodes();
 
-        $allChildren = $subject->childrenAttributeProcessor
+        $allChildren = $subject->getChildrenAttributeProcessor()
             ->loadChildrenRawAttributesInBatches($storeId, $allChildren, $configurableAttributeCodes);
 
         // add Media Gallery
@@ -256,7 +260,7 @@ class ConfigurableDataExtender {
                 $productStockData = $stockRowData[$childId];
 
                 unset($productStockData['product_id']);
-                $productStockData = $subject->inventoryProcessor->prepareInventoryData($storeId, $productStockData);
+                $productStockData = $subject->getInventoryProcessor()->prepareInventoryData($storeId, $productStockData);
                 $child['stock'] = $productStockData;
             }
 
