@@ -15,7 +15,7 @@ use Magento\Framework\Event\ObserverInterface;
 /**
  * Checks if a category has changed products and depends on indexer configuration.
  */
-class CategoryReorderReindexTrigger implements ObserverInterface
+class CategorySaveReindexTrigger implements ObserverInterface
 {
     /**
      * @inheritdoc
