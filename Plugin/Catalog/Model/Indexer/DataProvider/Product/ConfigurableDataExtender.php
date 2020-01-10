@@ -197,17 +197,17 @@ class ConfigurableDataExtender {
     private function extendDataWithCategoryNew($indexData,$storeId){
         foreach ($indexData as $product_id => $indexDataItem) {
 
-            if ($indexDataItem['type_id'] !== 'configurable') {
+            if ($indexData[$product_id]['type_id'] !== 'configurable') {
                 continue;
             }
 
-            if ( ! isset($indexDataItem['configurable_options']) ) {
+            if ( ! isset($indexData[$product_id]['configurable_options']) ) {
                 continue;
             }
 
             $has_colors = false;
             $colors = null;
-            foreach ($indexDataItem['configurable_options'] as $option) {
+            foreach ($indexData[$product_id]['configurable_options'] as $option) {
                 if ( $option['attribute_code'] === 'color' ) {
                     /**
                      * For some reason, product configurations can be added without adding values in the configurable,
@@ -224,14 +224,14 @@ class ConfigurableDataExtender {
             if ( !$has_colors) {
                 $wasChildInThisColor = false;
 
-                foreach($indexDataItem['configurable_children'] as $child_data) {
+                foreach($indexData[$product_id]['configurable_children'] as $child_data) {
 
                     if (!$wasChildInThisColor) {
                         $wasChildInThisColor = true;
 
                         $category_data =  $this->getCategoryData($storeId, $child_data['id']);
-                        $indexDataItem['category_new'] = $category_data['category_new'];
-                        $indexDataItem['category'] = $category_data['category'];
+                        $indexData[$product_id]['category_new'] = $category_data['category_new'];
+                        $indexData[$product_id]['category'] = $category_data['category'];
 
                         continue;
                     } else {
@@ -270,7 +270,7 @@ class ConfigurableDataExtender {
 
                         $wasChildInThisColor = false;
                         //loop through the children and get the values of the smallest size child with the same color
-                        foreach($indexDataItem['configurable_children'] as $child_data) {
+                        foreach($indexData[$product_id]['configurable_children'] as $child_data) {
                             if(!empty($child_data['color']) && $child_data['color'] == $color['value_index']){
 
                                 if (!$wasChildInThisColor) {
@@ -342,16 +342,16 @@ class ConfigurableDataExtender {
 
     /**
      * @param $indexDataItem
-     * @return array
+     * @return string
      */
-    private function getIdForClonedItem($indexDataItem): array
+    private function getIdForClonedItem($indexDataItem): string
     {
         if (!empty($indexDataItem['color'])) {
             $cloneId = $indexDataItem['id'] . '-' . $indexDataItem['color'];
         } else {
             $cloneId = $indexDataItem['id'];
         }
-        return $cloneId;
+        return (string) $cloneId;
     }
 
 }
