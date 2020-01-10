@@ -40,6 +40,8 @@ class ConfigurableDataExtender {
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
+        $docs = $this->extendDataWithCategoryNew($docs,$storeId);
+
         return $docs;
     }
 
@@ -58,139 +60,49 @@ class ConfigurableDataExtender {
             }
 
             $has_colors = false;
+            $colors = null;
             foreach ($indexDataItem['configurable_options'] as $option) {
-                if ( $option['attribute_code'] == 'color' && !empty($option['values']) ) {
-                    $has_colors = true;
-                    $colors = $option['values'];
+                if ( $option['attribute_code'] === 'color' ) {
+                    /**
+                     * For some reason, product configurations can be added without adding values in the configurable,
+                     * make sure values exist
+                     */
+                    if(!empty($option['values'])) {
+                        $has_colors = true;
+                        $colors = $option['values'];
+                    }
                     break;
                 }
             }
 
-            if ( ! $has_colors && !empty($indexDataItem['color'])) {
-                $cloneId = $product_id.'-'.$indexDataItem['color'];
+            if ( !$has_colors) {
+                $cloneId = $this->getIdForClonedItem($indexDataItem);
                 $clones[$cloneId] = $indexDataItem;
-                $clones[$cloneId]['is_clone'] = 2;
-                $clones[$cloneId]['clone_color_id'] = $indexDataItem['color'];
-                $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$indexDataItem['color'];
 
-                $wasChildInThisColor = false;
-
-                foreach($clones[$cloneId]['configurable_children'] as $child_data) {
-
-                    if (!$wasChildInThisColor) {
-                        $wasChildInThisColor = true;
-
-                        $category_data =  $this->getCategoryData($storeId, $child_data['id']);
-
-                        $clones[$cloneId]['category_new'] = $category_data['category_new'];
-                        $clones[$cloneId]['category'] = $category_data['category'];
-                        continue;
-                    } else {
-                        $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
-                        foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
-                            if (!isset($clones[$cloneId]['category_new'])) {
-                                // Is it even possible?
-                                continue;
-                            }
-                            $currentValue = isset($clones[$cloneId]['category_new'][$category_id]) ? $clones[$cloneId]['category_new'][$category_id] : 0;
-                            // If new value is 0, do nothing
-                            if ($valueToCheck == 0) {
-                                continue;
-                            }
-                            // If current value is 0, and new is not 0. Set it
-                            if ($currentValue == 0) {
-                                // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
-                                $clones[$cloneId]['category_new'][$category_id] = $valueToCheck;
-                                continue;
-                            }
-
-                            // If both are none 0, compare
-                            if ($valueToCheck < $currentValue) {
-                                // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
-                                $clones[$cloneId]['category_new'][$category_id] = $valueToCheck;
-                                continue;
-                            }
-                        }
-                    }
+                if(!empty($indexDataItem['color'])){
+                    $clones[$cloneId]['clone_color_id'] = $indexDataItem['color'];
+                    $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$indexDataItem['color'];
+                } else {
+                    $clones[$cloneId]['sku'] = $indexDataItem['sku'];
                 }
+
+                $clones[$cloneId]['is_clone'] = 2;
 
             } else {
                 if(!empty($colors)){
-                foreach ($colors as $color) {
-                    $clone_color = strtolower(str_ireplace(' ', '-', $color['label']));
-                    $cloneId = $product_id.'-'.$color['value_index'];
-                    $clones[$cloneId] = $indexDataItem;
-                    $clones[$cloneId]['clone_color_label'] = $color['label'];
-                    $clones[$cloneId]['clone_color_id'] = $color['value_index'];
-                    $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$color['value_index'];
-                    $clones[$cloneId]['is_clone'] = 1;
-                    $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
-                    $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$color['label'];
-
-                    $wasChildInThisColor = false;
-                    //loop through the children and get the values of the smallest size child with the same color
-                    foreach($clones[$cloneId]['configurable_children'] as $child_data) {
-                        if(!empty($child_data['color']) && $child_data['color'] == $color['value_index']){
-
-                            //                         if(isset($child_data['color_group'])){
-                            //                             $clones[$cloneId]["color_group"] = $child_data['color_group'];
-                            //                         }
-                            //                          if(isset($child_data['style'])){
-                            //                             $clones[$cloneId]["length"] = $child_data['length'];
-                            //                          }
-                            //                           if(isset($child_data['color_group'])){
-                            //                             $clones[$cloneId]["style"] = $child_data['style'];
-                            //                           }
-                            // //                        $clones[$cloneId]["print"] = $child_data['print']; //Uncomment this to add print attribute
-
-                            //                         if(isset($child_data['featured']) && !empty(array_filter($child_data['featured']))){
-                            //                             $clones[$cloneId]['featured'] = $child_data['featured'];
-                            //                         }
-
-                            if (!$wasChildInThisColor) {
-                                $wasChildInThisColor = true;
-
-
-                                $category_data =  $this->getCategoryData($storeId, $child_data['id']);
-
-                                $clones[$cloneId]['category_new'] = $category_data['category_new'];
-                                $clones[$cloneId]['category'] = $category_data['category'];
-                                continue;
-                            } else {
-                                $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
-                                foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
-                                    if (!isset($clones[$cloneId]['category_new'])) {
-                                        // Is it even possible?
-                                        continue;
-                                    }
-                                    $currentValue = isset($clones[$cloneId]['category_new'][$category_id]) ? $clones[$cloneId]['category_new'][$category_id] : 0;
-                                    // If new value is 0, do nothing
-                                    if ($valueToCheck == 0) {
-                                        continue;
-                                    }
-                                    // If current value is 0, and new is not 0. Set it
-                                    if ($currentValue == 0) {
-                                        // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
-                                        $clones[$cloneId]['category_new'][$category_id] = $valueToCheck;
-                                        continue;
-                                    }
-
-                                    // If both are none 0, compare
-                                    if ($valueToCheck < $currentValue) {
-                                        // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
-                                        $clones[$cloneId]['category_new'][$category_id] = $valueToCheck;
-                                        continue;
-                                    }
-                                }
-                            }
-
-                        }
+                    foreach ($colors as $color) {
+                        $clone_color = strtolower(str_ireplace(' ', '-', $color['label']));
+                        $cloneId = $product_id.'-'.$color['value_index'];
+                        $clones[$cloneId] = $indexDataItem;
+                        $clones[$cloneId]['clone_color_label'] = $color['label'];
+                        $clones[$cloneId]['clone_color_id'] = $color['value_index'];
+                        $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$color['value_index'];
+                        $clones[$cloneId]['is_clone'] = 1;
+                        $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
+                        $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$color['label'];
                     }
-
-                }
                 }
             }
-
         }
 
         return $indexData + $clones;
@@ -282,6 +194,131 @@ class ConfigurableDataExtender {
         return $docs;
     }
 
+    private function extendDataWithCategoryNew($indexData,$storeId){
+        foreach ($indexData as $product_id => $indexDataItem) {
+
+            if ($indexDataItem['type_id'] !== 'configurable') {
+                continue;
+            }
+
+            if ( ! isset($indexDataItem['configurable_options']) ) {
+                continue;
+            }
+
+            $has_colors = false;
+            $colors = null;
+            foreach ($indexDataItem['configurable_options'] as $option) {
+                if ( $option['attribute_code'] === 'color' ) {
+                    /**
+                     * For some reason, product configurations can be added without adding values in the configurable,
+                     * make sure values exist
+                     */
+                    if(!empty($option['values'])) {
+                        $has_colors = true;
+                        $colors = $option['values'];
+                    }
+                    break;
+                }
+            }
+
+            if ( !$has_colors) {
+                $wasChildInThisColor = false;
+
+                foreach($indexDataItem['configurable_children'] as $child_data) {
+
+                    if (!$wasChildInThisColor) {
+                        $wasChildInThisColor = true;
+
+                        $category_data =  $this->getCategoryData($storeId, $child_data['id']);
+                        $indexDataItem['category_new'] = $category_data['category_new'];
+                        $indexDataItem['category'] = $category_data['category'];
+
+                        continue;
+                    } else {
+                        //loop through the children and get the values of the smallest size child with the same color
+                        $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
+                        foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
+                            if (!isset($indexData[$product_id]['category_new'])) {
+                                // Is it even possible?
+                                continue;
+                            }
+                            $currentValue = isset($indexData[$product_id]['category_new'][$category_id]) ? $indexData[$product_id]['category_new'][$category_id] : 0;
+                            // If new value is 0, do nothing
+                            if ($valueToCheck == 0) {
+                                continue;
+                            }
+                            // If current value is 0, and new is not 0. Set it
+                            if ($currentValue == 0) {
+                                // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
+                                $indexData[$product_id]['category_new'][$category_id] = $valueToCheck;
+                                continue;
+                            }
+
+                            // If both are none 0, compare
+                            if ($valueToCheck < $currentValue) {
+                                // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
+                                $indexData[$product_id]['category_new'][$category_id] = $valueToCheck;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                if(!empty($colors)){
+                    foreach ($colors as $color) {
+
+                        $wasChildInThisColor = false;
+                        //loop through the children and get the values of the smallest size child with the same color
+                        foreach($indexDataItem['configurable_children'] as $child_data) {
+                            if(!empty($child_data['color']) && $child_data['color'] == $color['value_index']){
+
+                                if (!$wasChildInThisColor) {
+                                    $wasChildInThisColor = true;
+
+                                    $category_data =  $this->getCategoryData($storeId, $child_data['id']);
+                                    $indexData[$product_id]['category_new'] = $category_data['category_new'];
+                                    $indexData[$product_id]['category'] = $category_data['category'];
+                                    continue;
+                                } else {
+                                    $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
+                                    foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
+                                        if (!isset($indexData[$product_id]['category_new'])) {
+                                            // Is it even possible?
+                                            continue;
+                                        }
+                                        $currentValue = isset($indexData[$product_id]['category_new'][$category_id]) ? $indexData[$product_id]['category_new'][$category_id] : 0;
+                                        // If new value is 0, do nothing
+                                        if ($valueToCheck == 0) {
+                                            continue;
+                                        }
+                                        // If current value is 0, and new is not 0. Set it
+                                        if ($currentValue == 0) {
+                                            // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
+                                            $indexData[$product_id]['category_new'][$category_id] = $valueToCheck;
+                                            continue;
+                                        }
+
+                                        // If both are none 0, compare
+                                        if ($valueToCheck < $currentValue) {
+                                            // $clones[$cloneId]['category'][$category_id] = $valueToCheck;
+                                            $indexData[$product_id]['category_new'][$category_id] = $valueToCheck;
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+
+                    }
+                }
+            }
+
+        }
+        return $indexData;
+    }
+
     /**
      * @param StoreInterface $store
      *
@@ -301,6 +338,20 @@ class ConfigurableDataExtender {
         }
 
         return $index;
+    }
+
+    /**
+     * @param $indexDataItem
+     * @return array
+     */
+    private function getIdForClonedItem($indexDataItem): array
+    {
+        if (!empty($indexDataItem['color'])) {
+            $cloneId = $indexDataItem['id'] . '-' . $indexDataItem['color'];
+        } else {
+            $cloneId = $indexDataItem['id'];
+        }
+        return $cloneId;
     }
 
 }
