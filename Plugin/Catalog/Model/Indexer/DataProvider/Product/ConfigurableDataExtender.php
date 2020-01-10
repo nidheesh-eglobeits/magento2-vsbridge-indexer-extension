@@ -59,14 +59,14 @@ class ConfigurableDataExtender {
 
             $has_colors = false;
             foreach ($indexDataItem['configurable_options'] as $option) {
-                if ( $option['attribute_code'] == 'color' ) {
+                if ( $option['attribute_code'] == 'color' && !empty($option['values']) ) {
                     $has_colors = true;
                     $colors = $option['values'];
                     break;
                 }
             }
 
-            if ( ! $has_colors ) {
+            if ( ! $has_colors && !empty($indexDataItem['color'])) {
                 $cloneId = $product_id.'-'.$indexDataItem['color'];
                 $clones[$cloneId] = $indexDataItem;
                 $clones[$cloneId]['is_clone'] = 2;
@@ -115,6 +115,7 @@ class ConfigurableDataExtender {
                 }
 
             } else {
+                if(!empty($colors)){
                 foreach ($colors as $color) {
                     $clone_color = strtolower(str_ireplace(' ', '-', $color['label']));
                     $cloneId = $product_id.'-'.$color['value_index'];
@@ -129,7 +130,7 @@ class ConfigurableDataExtender {
                     $wasChildInThisColor = false;
                     //loop through the children and get the values of the smallest size child with the same color
                     foreach($clones[$cloneId]['configurable_children'] as $child_data) {
-                        if($child_data['color'] == $color['value_index']){
+                        if(!empty($child_data['color']) && $child_data['color'] == $color['value_index']){
 
                             //                         if(isset($child_data['color_group'])){
                             //                             $clones[$cloneId]["color_group"] = $child_data['color_group'];
@@ -186,6 +187,7 @@ class ConfigurableDataExtender {
                         }
                     }
 
+                }
                 }
             }
 
