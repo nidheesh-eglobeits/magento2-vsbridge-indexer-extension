@@ -39,8 +39,7 @@ class ConfigurableDataExtender {
         $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
-
-        $docs = $this->extendDataWithCategoryNew($docs,$storeId);
+        $docs = $this->extendCloneDataWithCategoryNew($docs,$storeId);
 
         return $docs;
     }
@@ -194,13 +193,21 @@ class ConfigurableDataExtender {
         return $docs;
     }
 
-    private function extendDataWithCategoryNew($indexData,$storeId){
+    private function extendCloneDataWithCategoryNew($indexData,$storeId)
+    {
         foreach ($indexData as $product_id => $indexDataItem) {
 
+            /* We only want this information in the cloned items */
+            if(empty($indexData[$product_id]['is_clone'])){
+                continue;
+            }
+
+            /* We only want this information in the cloned configurable items */
             if ($indexData[$product_id]['type_id'] !== 'configurable') {
                 continue;
             }
 
+            /* We only want this information in the cloned configurable items that have options */
             if ( ! isset($indexData[$product_id]['configurable_options']) ) {
                 continue;
             }
@@ -238,10 +245,7 @@ class ConfigurableDataExtender {
                         //loop through the children and get the values of the smallest size child with the same color
                         $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
                         foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
-                            if (!isset($indexData[$product_id]['category_new'])) {
-                                // Is it even possible?
-                                continue;
-                            }
+
                             $currentValue = isset($indexData[$product_id]['category_new'][$category_id]) ? $indexData[$product_id]['category_new'][$category_id] : 0;
                             // If new value is 0, do nothing
                             if ($valueToCheck == 0) {
@@ -265,6 +269,9 @@ class ConfigurableDataExtender {
                 }
 
             } else {
+
+
+
                 if(!empty($colors)){
                     foreach ($colors as $color) {
 
@@ -283,10 +290,7 @@ class ConfigurableDataExtender {
                                 } else {
                                     $categories_data =  $this->getCategoryData($storeId, $child_data['id']);
                                     foreach ($categories_data['category_new'] as $category_id => $valueToCheck) {
-                                        if (!isset($indexData[$product_id]['category_new'])) {
-                                            // Is it even possible?
-                                            continue;
-                                        }
+
                                         $currentValue = isset($indexData[$product_id]['category_new'][$category_id]) ? $indexData[$product_id]['category_new'][$category_id] : 0;
                                         // If new value is 0, do nothing
                                         if ($valueToCheck == 0) {
