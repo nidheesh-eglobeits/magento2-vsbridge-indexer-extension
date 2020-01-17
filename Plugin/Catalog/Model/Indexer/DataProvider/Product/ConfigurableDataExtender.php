@@ -8,6 +8,8 @@ use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\MediaGalle
 use Divante\VsbridgeIndexerCore\Api\DataProviderInterface;
 use Divante\VsbridgeIndexerCore\Console\Command\RebuildEsIndexCommand;
 use Divante\VsbridgeIndexerCore\Config\IndicesSettings;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
 use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
@@ -23,6 +25,9 @@ class ConfigurableDataExtender {
 
     /* @var CategoryResource $categoryResource */
     private $categoryResource;
+
+    /* variable to cache locale for each store */
+    private $storeLocales = [];
 
     /**
      * This method will take ES docs prepared by Divante Extension and modify them
@@ -41,6 +46,8 @@ class ConfigurableDataExtender {
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
         $docs = $this->extendDataWithCategoryNew($docs,$storeId);
+
+        $docs = $this->addHreflangUrls($docs);
 
         return $docs;
     }
@@ -352,6 +359,37 @@ class ConfigurableDataExtender {
             $cloneId = $indexDataItem['id'];
         }
         return (string) $cloneId;
+    }
+
+    private function addHreflangUrls($indexData)
+    {
+        $objectManager = ObjectManager::getInstance();
+        $storeManager = $objectManager->create("\Magento\Store\Model\StoreManager");
+        $stores = $storeManager->getStores();
+        $websiteManager = $objectManager->create("\Magento\Store\Model\Website");
+
+        $productRepository = $objectManager->create(ProductRepositoryInterface::class);
+        $productRewrites = $objectManager->create(ProductUrlPathGenerator::class);
+
+        $configReader = $objectManager->create(\Magento\Framework\App\Config\ScopeConfigInterface::class);
+
+        foreach ($indexData as $product_id => $indexDataItem) {
+            $hrefLangs = [];
+            foreach($stores as $store){
+                $product = $productRepository->get($indexData[$product_id]['sku'],false,$store->getId());
+
+                /* @TODO: once approved, move out of this loop */
+                if(!isset($this->storeLocales[$store->getId()])) {
+                    $website = $websiteManager->load($store->getWebsiteId());
+                    $locale = $configReader->getValue('general/locale/code', 'website', $website->getCode());
+                    $this->storeLocales[$store->getId()] = $locale;
+                }
+
+                $hrefLangs[str_replace('_','-',$this->storeLocales[$store->getId()])] = $productRewrites->getUrlPath($product);
+            }
+
+            $indexData[$product_id]['storecode_url_paths'] = $hrefLangs;
+        }
     }
 
 }
