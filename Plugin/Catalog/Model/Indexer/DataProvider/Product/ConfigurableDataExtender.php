@@ -376,16 +376,20 @@ class ConfigurableDataExtender {
         foreach ($indexData as $product_id => $indexDataItem) {
             $hrefLangs = [];
             foreach($stores as $store){
-                $product = $productRepository->get($indexData[$product_id]['sku'],false,$store->getId());
+                try {
+                    $product = $productRepository->get($indexData[$product_id]['sku'], false, $store->getId());
 
-                /* @TODO: once approved, move out of this loop */
-                if(!isset($this->storeLocales[$store->getId()])) {
-                    $website = $websiteManager->load($store->getWebsiteId());
-                    $locale = $configReader->getValue('general/locale/code', 'website', $website->getCode());
-                    $this->storeLocales[$store->getId()] = $locale;
+                    /* @TODO: once approved, move out of this loop */
+                    if (!isset($this->storeLocales[$store->getId()])) {
+                        $website = $websiteManager->load($store->getWebsiteId());
+                        $locale = $configReader->getValue('general/locale/code', 'website', $website->getCode());
+                        $this->storeLocales[$store->getId()] = $locale;
+                    }
+
+                    $hrefLangs[str_replace('_', '-', $this->storeLocales[$store->getId()])] = $productRewrites->getUrlPath($product);
+                } catch (\Exception $e){
+
                 }
-
-                $hrefLangs[str_replace('_','-',$this->storeLocales[$store->getId()])] = $productRewrites->getUrlPath($product);
             }
 
             $indexData[$product_id]['storecode_url_paths'] = $hrefLangs;
