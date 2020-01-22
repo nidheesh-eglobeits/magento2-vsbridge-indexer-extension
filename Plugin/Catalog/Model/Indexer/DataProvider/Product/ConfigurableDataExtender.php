@@ -43,11 +43,11 @@ class ConfigurableDataExtender {
         /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
         $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
+	    $docs = $this->addHreflangUrls($docs);
+
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
         $docs = $this->extendDataWithCategoryNew($docs,$storeId);
-
-        $docs = $this->addHreflangUrls($docs);
 
         return $docs;
     }
@@ -375,6 +375,10 @@ class ConfigurableDataExtender {
 
         foreach ($indexData as $product_id => $indexDataItem) {
             $hrefLangs = [];
+            if ($indexData[$product_id]['type_id'] == 'simple') {
+                continue;
+            }
+
             foreach($stores as $store){
                 try {
                     $product = $productRepository->get($indexData[$product_id]['sku'], false, $store->getId());
@@ -394,8 +398,7 @@ class ConfigurableDataExtender {
 
             $indexData[$product_id]['storecode_url_paths'] = $hrefLangs;
         }
+        return $indexData;
     }
 
 }
-
-
