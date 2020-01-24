@@ -32,32 +32,39 @@ class CategorySaveReindexTrigger implements ObserverInterface
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         }
 
-        //$indexerFactory = $objectManager->get('Magento\Indexer\Model\IndexerFactory');
-        /* @var \Magento\Indexer\Model\IndexerFactory $indexerFactory */
-
-        //$productIndexer = $indexerFactory->create();
-        //$productIndexer->load('vsbridge_product_indexer');
-
-        /* Approach 1: doesn't work */
-        /*$productProcessor = $objectManager->get('\Divante\VsbridgeIndexerCatalog\Model\Indexer\ProductProcessor');
+        $tmpProductIds = [];
         foreach ($positions as $productId => $position) {
-                    $productProcessor->reindexRow($productId);
-        }*/
-
-        /* Approach 2: does not work */
-        /*foreach ($positions as $productId => $position) {
-            $product = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
-            if($product) {
-                $product->reindex();
+            /* only save products with a non-zero value, others can wait till next save */
+            if(!empty($position)) {
+                $tmpProductIds[] = $productId;
             }
-        }*/
+        }
 
-        foreach ($positions as $productId => $position) {
-            $product = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
+        $collectionFactory = $objectManager->get('\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory');
+        /* @var $collectionFactory \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory */
+        $productStatus = $objectManager->get('\Magento\Catalog\Model\Product\Attribute\Source\Status');
+        /* @var $productStatus \Magento\Catalog\Model\Product\Attribute\Source\Status */
+        $productVisibility = $objectManager->get('\Magento\Catalog\Model\Product\Visibility');
+        /* @var $productVisibility \Magento\Catalog\Model\Product\Visibility */
+        $collection = $collectionFactory->create();
+        if($category->getStoreId() > 0) {
+            $collection->setStoreId($category->getStoreId()); //should we implement this ?
+        }
+        $collection->addAttributeToFilter('status', ['in' => $productStatus->getVisibleStatusIds()]);
+        $collection->addAttributeToFilter('visibility',['in' => $productVisibility->getVisibleInSiteIds()]);
+        $collection->addFieldToFilter('entity_id',['in' => $tmpProductIds]);
+
+        foreach($collection as $product){
+            /* @var $product Magento\Catalog\Model\Product */
             if ($product) {
                 $product->save();
+                /**
+                 * @TODO: reindex is already called by Product::afterSave ???
+                 * works fast enough, but see if this can also be removed
+                 */
                 $product->reindex();
             }
         }
+
     }
 }
