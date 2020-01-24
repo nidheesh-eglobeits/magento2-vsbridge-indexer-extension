@@ -42,7 +42,7 @@ class ConfigurableDataExtender {
         /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
         $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
-	    $docs = $this->addHreflangUrls($docs);
+        $docs = $this->addHreflangUrls($docs);
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
@@ -192,24 +192,7 @@ class ConfigurableDataExtender {
                     $docs[$parentId]['configurable_options'] = [];
                 }
 
-                /**
-                 * NOTE: this is probably main reason why the records are duplicate, here it adds new element instead of overwriting old one
-                 * my guess we should reset it first before adding to it
-                 */
-                $docs[$parentId]['configurable_children'][] = $child;
-            }
-        }
-
-        /* Remove duplicate children */
-        /* @TODO: find out why they are duplicated in the first place so this is not needed */
-        foreach ($allChildren as $childKey => $child) {
-            $parentIds = $child['parent_ids'];
-            foreach ($parentIds as $parentId) {
-                foreach($docs[$parentId]['configurable_children'] as $configurableChildKey => $configurableChild){
-                    if (!array_key_exists('media_gallery', $docs[$parentId]['configurable_children'][$configurableChildKey])) {
-                        unset($docs[$parentId]['configurable_children'][$configurableChildKey]);
-                    }
-                }
+                $docs[$parentId] = $this->replaceOriginalChild($docs[$parentId],$child);
             }
         }
 
@@ -417,6 +400,16 @@ class ConfigurableDataExtender {
             $indexData[$product_id]['storecode_url_paths'] = $hrefLangs;
         }
         return $indexData;
+    }
+
+    private function replaceOriginalChild($parentIndexData,$newChildData){
+        foreach($parentIndexData['configurable_children'] as $childKey =>$childData){
+            if($childData['sku'] == $newChildData['sku']) {
+                $parentIndexData['configurable_children'][$childKey] = $newChildData;
+            }
+        }
+
+        return $parentIndexData;
     }
 
 }
