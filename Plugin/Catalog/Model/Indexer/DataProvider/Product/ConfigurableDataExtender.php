@@ -36,7 +36,6 @@ class ConfigurableDataExtender {
      */
     public function afterAddData(ConfigurableData $subject, $docs){
         $storeId = $this->storeId;
-
         $docs = $this->extendDataWithGallery($subject, $docs,$storeId);
 
         $objectManager = ObjectManager::getInstance();
@@ -168,8 +167,8 @@ class ConfigurableDataExtender {
         // add Media Gallery
         $allChildren = $mediaGalleryDataProvider->addData($allChildren, $storeId);
 
-        $firstWasIterated = false;
-        foreach ($allChildren as $child) {
+        foreach ($allChildren as $childKey => $child) {
+
             $childId = $child['entity_id'];
             $child['id'] = (int) $childId;
             $parentIds = $child['parent_ids'];
@@ -187,18 +186,30 @@ class ConfigurableDataExtender {
             }
 
             foreach ($parentIds as $parentId) {
-                if($firstWasIterated === false){
-                    /* prevent having twice the children amount by resetting them here */
-                    $docs[$parentId]['configurable_children'] = [];
-                    $firstWasIterated = true;
-                }
                 $child = $subject->filterData($child);
 
                 if (!isset($docs[$parentId]['configurable_options'])) {
                     $docs[$parentId]['configurable_options'] = [];
                 }
 
+                /**
+                 * NOTE: this is probably main reason why the records are duplicate, here it adds new element instead of overwriting old one
+                 * my guess we should reset it first before adding to it
+                 */
                 $docs[$parentId]['configurable_children'][] = $child;
+            }
+        }
+
+        /* Remove duplicate children */
+        /* @TODO: find out why they are duplicated in the first place so this is not needed */
+        foreach ($allChildren as $childKey => $child) {
+            $parentIds = $child['parent_ids'];
+            foreach ($parentIds as $parentId) {
+                foreach($docs[$parentId]['configurable_children'] as $configurableChildKey => $configurableChild){
+                    if (!array_key_exists('media_gallery', $docs[$parentId]['configurable_children'][$configurableChildKey])) {
+                        unset($docs[$parentId]['configurable_children'][$configurableChildKey]);
+                    }
+                }
             }
         }
 
@@ -207,7 +218,8 @@ class ConfigurableDataExtender {
         return $docs;
     }
 
-    private function extendDataWithCategoryNew($indexData,$storeId){
+    private function extendDataWithCategoryNew($indexData,$storeId)
+    {
         foreach ($indexData as $product_id => $indexDataItem) {
 
             if ($indexData[$product_id]['type_id'] !== 'configurable') {
