@@ -168,6 +168,7 @@ class ConfigurableDataExtender {
         // add Media Gallery
         $allChildren = $mediaGalleryDataProvider->addData($allChildren, $storeId);
 
+        $firstWasIterated = false;
         foreach ($allChildren as $child) {
             $childId = $child['entity_id'];
             $child['id'] = (int) $childId;
@@ -186,6 +187,11 @@ class ConfigurableDataExtender {
             }
 
             foreach ($parentIds as $parentId) {
+                if($firstWasIterated === false){
+                    /* prevent having twice the children amount by resetting them here */
+                    $docs[$parentId]['configurable_children'] = [];
+                    $firstWasIterated = true;
+                }
                 $child = $subject->filterData($child);
 
                 if (!isset($docs[$parentId]['configurable_options'])) {
