@@ -6,6 +6,7 @@ use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Category\Attribute
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\Framework\App\ObjectManager;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator;
 
 class AttributeDataExtender {
 
@@ -37,7 +38,7 @@ class AttributeDataExtender {
 
         $categoryRepository = $objectManager->create(CategoryRepositoryInterface::class);
         /* @var $categoryRepository CategoryRepositoryInterface */
-
+        $categoryRewrites = $objectManager->create(CategoryUrlPathGenerator::class);
 
         $configReader = $objectManager->create(\Magento\Framework\App\Config\ScopeConfigInterface::class);
 
@@ -54,7 +55,7 @@ class AttributeDataExtender {
                         $this->storeLocales[$store->getId()] = $locale;
                     }
 
-                    $hrefLangs[str_replace('_', '-', $this->storeLocales[$store->getId()])] = $category->getUrl();
+                    $hrefLangs[str_replace('_', '-', $this->storeLocales[$store->getId()])] = $categoryRewrites->getUrlPath($category);
                 } catch (\Exception $e){
 
                 }
