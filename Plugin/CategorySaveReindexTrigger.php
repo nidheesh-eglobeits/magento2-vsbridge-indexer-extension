@@ -28,9 +28,10 @@ class CategorySaveReindexTrigger implements ObserverInterface
          */
         $positions = $category->getProductsPosition();
 
-        if (!empty($positions)) {
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        if (empty($positions)) {
+            return;
         }
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
         $tmpProductIds = [];
         foreach ($positions as $productId => $position) {
