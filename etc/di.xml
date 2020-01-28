@@ -9,4 +9,8 @@
         <plugin name="addCustomDataToVueSFCatalogCategoryIndex"
                 type="CodingMice\VsBridgeIndexerExtension\Plugin\Catalog\Model\Indexer\DataProvider\Category\AttributeDataExtender" />
     </type>
+    <type name="Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\BundleOptionsData">
+        <plugin name="addCustomBundleDataToVueSFCatalogProductIndex"
+                type="CodingMice\VsBridgeIndexerExtension\Plugin\Catalog\Model\Indexer\DataProvider\Product\BundleDataExtender" />
+    </type>
 </config>

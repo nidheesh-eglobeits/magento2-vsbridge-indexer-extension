@@ -44,6 +44,8 @@ class ConfigurableDataExtender {
 
         $docs = $this->addHreflangUrls($docs);
 
+        $docs = $this->addDiscountAmount($docs, $storeId);
+
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
         $docs = $this->extendDataWithCategoryNew($docs,$storeId);
@@ -398,6 +400,26 @@ class ConfigurableDataExtender {
             }
 
             $indexData[$product_id]['storecode_url_paths'] = $hrefLangs;
+        }
+        return $indexData;
+    }
+
+    private function addDiscountAmount($indexData, $storeId)
+    {
+        $objectManager = ObjectManager::getInstance();
+        $productRepository = $objectManager->create(ProductRepositoryInterface::class);
+
+        foreach ($indexData as $product_id => $indexDataItem) {
+            $productTypeID = $indexData[$product_id]['type_id'];
+            if ($productTypeID == 'simple' || $productTypeID == 'bundle') {
+                continue;
+            }
+
+            $product = $productRepository->get($indexData[$product_id]['sku'], false, $storeId);
+            $final_price = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
+            $regular_price = $product->getPriceInfo()->getPrice('regular_price')->getAmount()->getValue();
+
+            $indexData[$product_id]['discount_amount'] = intval(round(100 - (($final_price / $regular_price) * 100)));
         }
         return $indexData;
     }
