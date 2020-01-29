@@ -18,6 +18,12 @@ use Magento\Store\Api\Data\StoreInterface;
 class ConfigurableDataExtender {
 
     public $storeId;
+    protected $objectManager;
+
+    public function __construct()
+    {
+        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    }
 
     public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
         $this->storeId = $storeId;
@@ -38,9 +44,8 @@ class ConfigurableDataExtender {
         $storeId = $this->storeId;
         $docs = $this->extendDataWithGallery($subject, $docs,$storeId);
 
-        $objectManager = ObjectManager::getInstance();
         /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
-        $this->categoryResource = $objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
+        $this->categoryResource = $this->objectManager->create("Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category");
 
         $docs = $this->addHreflangUrls($docs);
 
@@ -141,8 +146,7 @@ class ConfigurableDataExtender {
 
     private function extendDataWithGallery(\Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData $subject, $docs,$storeId)
     {
-        $objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
-        $storeManager = $objectManager->create("Magento\Store\Model\StoreManagerInterface");
+        $storeManager = $this->objectManager->create("Magento\Store\Model\StoreManagerInterface");
         /* @var StoreManagerInterface $storeManager */
         $store = $storeManager->getStore($storeId);
         $index = $this->getIndex($store);
@@ -337,9 +341,8 @@ class ConfigurableDataExtender {
     private function getIndex(StoreInterface $store)
     {
 
-        $objectManager = ObjectManager::getInstance();
         /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
-        $indexOperations = $objectManager->create("Divante\VsbridgeIndexerCore\Index\IndexOperations");
+        $indexOperations = $this->objectManager->create("Divante\VsbridgeIndexerCore\Index\IndexOperations");
 
         try {
             $index = $indexOperations->getIndexByName(RebuildEsIndexCommand::INDEX_IDENTIFIER, $store);
@@ -366,15 +369,14 @@ class ConfigurableDataExtender {
 
     private function addHreflangUrls($indexData)
     {
-        $objectManager = ObjectManager::getInstance();
-        $storeManager = $objectManager->create("\Magento\Store\Model\StoreManager");
+        $storeManager = $this->objectManager->create("\Magento\Store\Model\StoreManager");
         $stores = $storeManager->getStores();
-        $websiteManager = $objectManager->create("\Magento\Store\Model\Website");
+        $websiteManager = $this->objectManager->create("\Magento\Store\Model\Website");
 
-        $productRepository = $objectManager->create(ProductRepositoryInterface::class);
-        $productRewrites = $objectManager->create(ProductUrlPathGenerator::class);
+        $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
+        $productRewrites = $this->objectManager->create(ProductUrlPathGenerator::class);
 
-        $configReader = $objectManager->create(\Magento\Framework\App\Config\ScopeConfigInterface::class);
+        $configReader = $this->objectManager->create(\Magento\Framework\App\Config\ScopeConfigInterface::class);
 
         foreach ($indexData as $product_id => $indexDataItem) {
             $hrefLangs = [];
@@ -406,20 +408,30 @@ class ConfigurableDataExtender {
 
     private function addDiscountAmount($indexData, $storeId)
     {
-        $objectManager = ObjectManager::getInstance();
-        $productRepository = $objectManager->create(ProductRepositoryInterface::class);
-
         foreach ($indexData as $product_id => $indexDataItem) {
             $productTypeID = $indexData[$product_id]['type_id'];
-            if ($productTypeID == 'simple' || $productTypeID == 'bundle') {
+            if ($productTypeID != 'configurable') {
                 continue;
             }
 
-            $product = $productRepository->get($indexData[$product_id]['sku'], false, $storeId);
-            $final_price = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
-            $regular_price = $product->getPriceInfo()->getPrice('regular_price')->getAmount()->getValue();
+            $configurableDiscountAmount = null;
+            if (isset($indexDataItem['final_price']) && isset($indexDataItem['regular_price'])) {
+                $configurableFinalPrice = $indexDataItem['final_price'];
+                $configurableRegularPrice = $indexDataItem['regular_price'];
+                $configurableDiscountAmount = intval(round(100 - (($configurableFinalPrice / $configurableRegularPrice) * 100)));
+            }
+            $indexData[$product_id]['discount_amount'] = $configurableDiscountAmount;
 
-            $indexData[$product_id]['discount_amount'] = intval(round(100 - (($final_price / $regular_price) * 100)));
+            foreach ($indexData['configurable_children'] as $key => $child) {
+                $childDiscountAmount = null;
+                if (isset($child['final_price']) && isset($child['regular_price'])) {
+                    $childFinalPrice = $child['final_price'];
+                    $childRegularPrice = $child['regular_price'];
+                    $childDiscountAmount = intval(round(100 - (($childFinalPrice / $childRegularPrice) * 100)));
+                }
+
+                $indexData[$product_id]['configurable_children'][$key]['discount_amount'] = $childDiscountAmount;
+            }
         }
         return $indexData;
     }
