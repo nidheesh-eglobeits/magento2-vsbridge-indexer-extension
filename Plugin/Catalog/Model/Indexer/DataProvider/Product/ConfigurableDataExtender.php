@@ -17,16 +17,11 @@ use Magento\Store\Api\Data\StoreInterface;
 
 class ConfigurableDataExtender {
 
-    public $storeId;
     protected $objectManager;
 
     public function __construct()
     {
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-    }
-
-    public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
-        $this->storeId = $storeId;
     }
 
     /* @var CategoryResource $categoryResource */
@@ -40,8 +35,7 @@ class ConfigurableDataExtender {
      * before they are added to ES in \Divante\VsbridgeIndexerCore\Indexer\GenericIndexerHandler::saveIndex
      * @see: \Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData::addData
      */
-    public function afterAddData(ConfigurableData $subject, $docs){
-        $storeId = $this->storeId;
+    public function afterAddData(ConfigurableData $subject, $docs, $indexData, $storeId){
         $docs = $this->extendDataWithGallery($subject, $docs,$storeId);
 
         /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
