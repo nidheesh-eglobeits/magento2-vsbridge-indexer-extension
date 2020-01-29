@@ -26,22 +26,38 @@ class BundleDataExtender
                 continue;
             }
 
-            $product = $productRepository->get($indexData[$product_id]['sku'], false, $storeId);
-            $final_price = $product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
+            $bundlePrice = $indexDataItem['price'];
 
-            $regular_price = 0;
+            $childrenRegularPrize = [
+                'min' => 0,
+                'max' => 0
+            ];
             foreach ($indexDataItem['bundle_options'] as $bundleOption) {
-                if (isset($bundleOption['product_links'][0]['price'])) {
-                    $bundleOptionPrice = $bundleOption['product_links'][0]['price'];
-                    $regular_price += $bundleOptionPrice;
+                $optionPrizes = [];
+                foreach ($bundleOption['product_links'] as $child) {
+                    $childSKU = $child['sku'];
+                    $childProduct = $productRepository->get($childSKU, false, $storeId);
+                    $childRegularPrize = $childProduct->getPriceInfo()->getPrice('regular_price')->getAmount()->getValue();
+                    $optionPrizes[] = intval(round($childRegularPrize));
                 }
+                sort($optionPrizes);
+                $childrenRegularPrize['min'] += $optionPrizes[0];
+                $childrenRegularPrize['max'] += end($optionPrizes);
             }
+
+            $indexData[$product_id]['bundle_children_price'] = $childrenRegularPrize['min'] . '-' . $childrenRegularPrize['max'];
 
             $discountAmount = null;
-            if ($regular_price) {
-                $discountAmount = intval(round(100 - (($final_price / $regular_price) * 100)));
+            if ($childrenRegularPrize['min'] == $childrenRegularPrize['max']) {
+                $childrenRegularPrize = $childrenRegularPrize['max'];
+                $discountAmount = intval(round(100 - (($bundlePrice / $childrenRegularPrize) * 100)));
+            } else {
+                $discountAmountMin = intval(round(100 - (($bundlePrice / $childrenRegularPrize['min']) * 100)));
+                $discountAmountMax = intval(round(100 - (($bundlePrice / $childrenRegularPrize['max']) * 100)));
+                $discountAmount = $discountAmountMin . '-' . $discountAmountMax;
             }
-            $indexData[$product_id]['discount_amount'] = $discountAmount;
+
+            $indexData[$product_id]['discount'] = $discountAmount;
         }
         return $indexData;
     }
