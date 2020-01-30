@@ -26,7 +26,11 @@ class BundleDataExtender
                 continue;
             }
 
-            $bundlePrice = $indexDataItem['price'];
+            $bundlePrice = $indexDataItem['price'] ?? null;
+
+            if (!array_key_exists('bundle_options', $indexDataItem)) {
+                continue;
+            }
 
             $childrenRegularPrize = [
                 'min' => 0,
