@@ -416,7 +416,11 @@ class ConfigurableDataExtender {
             }
             $indexData[$product_id]['discount_amount'] = $configurableDiscountAmount;
 
-            foreach ($indexData['configurable_children'] as $key => $child) {
+            if (!isset($indexDataItem['configurable_children'])) {
+                continue;
+            }
+
+            foreach ($indexDataItem['configurable_children'] as $key => $child) {
                 $childDiscountAmount = null;
                 if (isset($child['final_price']) && isset($child['regular_price'])) {
                     $childFinalPrice = $child['final_price'];
