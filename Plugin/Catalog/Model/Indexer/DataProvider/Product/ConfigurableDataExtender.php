@@ -412,23 +412,25 @@ class ConfigurableDataExtender {
             if (isset($indexDataItem['final_price']) && isset($indexDataItem['regular_price'])) {
                 $configurableFinalPrice = $indexDataItem['final_price'];
                 $configurableRegularPrice = $indexDataItem['regular_price'];
-                $configurableDiscountAmount = intval(round(100 - (($configurableFinalPrice / $configurableRegularPrice) * 100)));
+                if ($configurableFinalPrice && $configurableRegularPrice) {
+                    $configurableDiscountAmount = intval(round(100 - (($configurableFinalPrice / $configurableRegularPrice) * 100)));
+                }
             }
             $indexData[$product_id]['discount_amount'] = $configurableDiscountAmount;
 
-            if (!isset($indexDataItem['configurable_children'])) {
-                continue;
-            }
+            if (array_key_exists('configurable_children', $indexDataItem) && is_iterable($indexDataItem['configurable_children'])) {
+                foreach ($indexDataItem['configurable_children'] as $key => $child) {
+                    $childDiscountAmount = null;
+                    if (isset($child['final_price']) && isset($child['regular_price'])) {
+                        $childFinalPrice = $child['final_price'];
+                        $childRegularPrice = $child['regular_price'];
+                        if ($childFinalPrice && $childRegularPrice) {
+                            $childDiscountAmount = intval(round(100 - (($childFinalPrice / $childRegularPrice) * 100)));
+                        }
+                    }
 
-            foreach ($indexDataItem['configurable_children'] as $key => $child) {
-                $childDiscountAmount = null;
-                if (isset($child['final_price']) && isset($child['regular_price'])) {
-                    $childFinalPrice = $child['final_price'];
-                    $childRegularPrice = $child['regular_price'];
-                    $childDiscountAmount = intval(round(100 - (($childFinalPrice / $childRegularPrice) * 100)));
+                    $indexData[$product_id]['configurable_children'][$key]['discount_amount'] = $childDiscountAmount;
                 }
-
-                $indexData[$product_id]['configurable_children'][$key]['discount_amount'] = $childDiscountAmount;
             }
         }
         return $indexData;
