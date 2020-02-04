@@ -38,6 +38,9 @@ class BundleDataExtender
             ];
             foreach ($indexDataItem['bundle_options'] as $bundleOption) {
                 $optionPrizes = [];
+                if(empty($bundleOption['product_links'])){
+                    continue;
+                }
                 foreach ($bundleOption['product_links'] as $child) {
                     $childSKU = $child['sku'];
                     $childProduct = $productRepository->get($childSKU, false, $storeId);
