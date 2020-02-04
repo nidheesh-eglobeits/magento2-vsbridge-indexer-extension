@@ -57,10 +57,20 @@ class BundleDataExtender
             $discountAmount = null;
             if ($childrenRegularPrize['min'] == $childrenRegularPrize['max']) {
                 $childrenRegularPrize = $childrenRegularPrize['max'];
-                $discountAmount = intval(round(100 - (($bundlePrice / $childrenRegularPrize) * 100)));
+                $discountAmount = 0;
+                if($childrenRegularPrize > 0) {
+                    $discountAmount = intval(round(100 - (($bundlePrice / $childrenRegularPrize) * 100)));
+                }
             } else {
-                $discountAmountMin = intval(round(100 - (($bundlePrice / $childrenRegularPrize['min']) * 100)));
-                $discountAmountMax = intval(round(100 - (($bundlePrice / $childrenRegularPrize['max']) * 100)));
+                $discountAmountMin = 0;
+                if($childrenRegularPrize['min'] > 0) {
+                    $discountAmountMin = intval(round(100 - (($bundlePrice / $childrenRegularPrize['min']) * 100)));
+                }
+
+                $discountAmountMax = 0;
+                if($childrenRegularPrize['max'] > 0) {
+                    $discountAmountMax = intval(round(100 - (($bundlePrice / $childrenRegularPrize['max']) * 100)));
+                }
                 $discountAmount = $discountAmountMin . '-' . $discountAmountMax;
             }
 
