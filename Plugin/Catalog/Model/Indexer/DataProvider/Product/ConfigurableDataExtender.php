@@ -6,6 +6,7 @@ use Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category as Categ
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\MediaGalleryData;
 use Divante\VsbridgeIndexerCore\Api\DataProviderInterface;
+use Divante\VsbridgeIndexerCore\Api\IndexOperationInterface;
 use Divante\VsbridgeIndexerCore\Console\Command\RebuildEsIndexCommand;
 use Divante\VsbridgeIndexerCore\Config\IndicesSettings;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -140,14 +141,9 @@ class ConfigurableDataExtender {
 
     private function extendDataWithGallery(\Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData $subject, $docs,$storeId)
     {
-        $storeManager = $this->objectManager->create("Magento\Store\Model\StoreManagerInterface");
-        /* @var StoreManagerInterface $storeManager */
-        $store = $storeManager->getStore($storeId);
-        $index = $this->getIndex($store);
-        $type = $index->getType('product');
 
         /* make this work here */
-        $mediaGalleryDataProvider = $type->getDataProvider('media_gallery');
+        $mediaGalleryDataProvider = $this->objectManager->create(MediaGalleryData::class);
 
         $configurableResource = $subject->getConfigurableResource();
         $configurableResource->setProducts($docs);
@@ -328,26 +324,6 @@ class ConfigurableDataExtender {
     }
 
     /**
-     * @param StoreInterface $store
-     *
-     * @return IndexInterface
-     */
-    private function getIndex(StoreInterface $store)
-    {
-
-        /* @var \Divante\VsbridgeIndexerCore\Index\IndexOperations $indexOperations */
-        $indexOperations = $this->objectManager->create("Divante\VsbridgeIndexerCore\Index\IndexOperations");
-
-        try {
-            $index = $indexOperations->getIndexByName(RebuildEsIndexCommand::INDEX_IDENTIFIER, $store);
-        } catch (\Exception $e) {
-            $index = $indexOperations->createIndex(RebuildEsIndexCommand::INDEX_IDENTIFIER, $store);
-        }
-
-        return $index;
-    }
-
-    /**
      * @param $indexDataItem
      * @return string
      */
@@ -447,3 +423,4 @@ class ConfigurableDataExtender {
     }
 
 }
+
