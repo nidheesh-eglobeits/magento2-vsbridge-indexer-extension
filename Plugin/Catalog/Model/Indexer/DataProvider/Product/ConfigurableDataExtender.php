@@ -158,7 +158,7 @@ class ConfigurableDataExtender {
         $configurableAttributeCodes = $subject->getConfigurableResource()->getConfigurableAttributeCodes();
 
         $allChildren = $subject->getChildrenAttributeProcessor()
-            ->loadChildrenRawAttributesInBatches($storeId, $allChildren, $configurableAttributeCodes);
+            ->execute($storeId, $allChildren, $configurableAttributeCodes);
 
         // add Media Gallery
         $allChildren = $mediaGalleryDataProvider->addData($allChildren, $storeId);
