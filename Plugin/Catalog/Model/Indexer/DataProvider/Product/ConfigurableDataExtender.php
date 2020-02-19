@@ -20,9 +20,11 @@ class ConfigurableDataExtender {
 
     protected $objectManager;
 
-    public function __construct()
-    {
-        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    /* @var LoadOptionById $loadOptionById */
+    private $loadOptionById;
+
+    public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
+        $this->storeId = $storeId;
     }
 
     /* @var CategoryResource $categoryResource */
@@ -30,6 +32,13 @@ class ConfigurableDataExtender {
 
     /* variable to cache locale for each store */
     private $storeLocales = [];
+
+    public function __construct( 
+        \Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionById $loadOptionById
+    ){
+        $this->loadOptionById = $loadOptionById;
+        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    }
 
     /**
      * This method will take ES docs prepared by Divante Extension and modify them
@@ -88,8 +97,17 @@ class ConfigurableDataExtender {
                 $clones[$cloneId] = $indexDataItem;
 
                 if(!empty($indexDataItem['color'])){
-                    $clones[$cloneId]['clone_color_id'] = $indexDataItem['color'];
+                    $clones[$cloneId]['clone_color_id'] = isset($indexDataItem['color']) ? $indexDataItem['color'] : $indexDataItem['configurable_children'][0]['color'];
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$indexDataItem['color'];
+                    $clone_color_option = $this->loadOptionById->execute(
+                        'color',
+                        $clones[$cloneId]['clone_color_id'],
+                        $storeId
+                    );
+                    $clones[$cloneId]['clone_color_label'] = $clone_color_option['label'];
+                    $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
+                    $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$clones[$cloneId]['clone_color_label'];
+
                 } else {
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'];
                 }
