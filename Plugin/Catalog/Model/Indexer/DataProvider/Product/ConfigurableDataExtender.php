@@ -14,7 +14,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
 use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
-
+use Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionLabelById;
 
 class ConfigurableDataExtender {
 
@@ -68,6 +68,18 @@ class ConfigurableDataExtender {
 
         foreach ($indexData as $product_id => $indexDataItem) {
 
+            if ($indexDataItem['type_id'] == 'bundle') {
+                if ($indexDataItem['product_collection']) {
+                    $product_collection_option = $this->loadOptionById->execute(
+                        'product_collection',
+                        $indexDataItem['product_collection'],
+                        $storeId
+                    );
+                    $indexDataItem['product_collection_label'] = $product_collection_option['label'];
+                }
+                continue;
+            }
+
             if ($indexDataItem['type_id'] !== 'configurable') {
                 continue;
             }
@@ -108,6 +120,14 @@ class ConfigurableDataExtender {
                     $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
                     $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$clones[$cloneId]['clone_color_label'];
 
+                    if ($clones[$cloneId]['product_collection']) {
+                        $product_collection_option = $this->loadOptionById->execute(
+                            'product_collection',
+                            $clones[$cloneId]['product_collection'],
+                            $storeId
+                        );
+                        $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                    }
                 } else {
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'];
                 }
@@ -126,6 +146,14 @@ class ConfigurableDataExtender {
                         $clones[$cloneId]['is_clone'] = 1;
                         $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
                         $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$color['label'];
+                        if ($clones[$cloneId]['product_collection']) {
+                            $product_collection_option = $this->loadOptionById->execute(
+                                'product_collection',
+                                $clones[$cloneId]['product_collection'],
+                                $storeId
+                            );
+                            $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                        }
                     }
                 }
             }
