@@ -23,10 +23,6 @@ class ConfigurableDataExtender {
     /* @var LoadOptionById $loadOptionById */
     private $loadOptionById;
 
-    public function beforeAddData(ConfigurableData $subject, $docs, $storeId){
-        $this->storeId = $storeId;
-    }
-
     /* @var CategoryResource $categoryResource */
     private $categoryResource;
 
