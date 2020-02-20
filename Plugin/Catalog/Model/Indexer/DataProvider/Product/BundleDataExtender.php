@@ -29,7 +29,7 @@ class BundleDataExtender
             // Add slug_from_name for pretty URLs
             // I did same for Configurables
             // These functions are just equal `slugify`
-            $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+            $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
 
             $bundlePrice = $indexDataItem['price'] ?? null;
 
