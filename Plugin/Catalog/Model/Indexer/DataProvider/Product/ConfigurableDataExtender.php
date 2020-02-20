@@ -64,18 +64,18 @@ class ConfigurableDataExtender {
 
         foreach ($indexData as $product_id => $indexDataItem) {
 
-            if ($indexDataItem['type_id'] == 'bundle') {
-                if ($indexDataItem['product_collection']) {
-                    $product_collection_option = $this->loadOptionById->execute(
-                        'product_collection',
-                        $indexDataItem['product_collection'],
-                        $storeId
-                    );
-                    $indexDataItem['product_collection_label'] = $product_collection_option['label'];
-                }
-                $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
-                continue;
-            }
+            // if ($indexDataItem['type_id'] == 'bundle') {
+            //     if ($indexDataItem['product_collection']) {
+            //         $product_collection_option = $this->loadOptionById->execute(
+            //             'product_collection',
+            //             $indexDataItem['product_collection'],
+            //             $storeId
+            //         );
+            //         $indexDataItem['product_collection_label'] = $product_collection_option['label'];
+            //     }
+            //     $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
+            //     continue;
+            // }
 
             if ($indexDataItem['type_id'] !== 'configurable') {
                 continue;
@@ -126,7 +126,7 @@ class ConfigurableDataExtender {
                         $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
                     }
 
-                $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+                    $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
 
 
                 } else {
@@ -156,7 +156,7 @@ class ConfigurableDataExtender {
                             $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
                         }
 
-                        $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+                        $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
 
                     }
                 }
