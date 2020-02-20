@@ -73,6 +73,7 @@ class ConfigurableDataExtender {
                     );
                     $indexDataItem['product_collection_label'] = $product_collection_option['label'];
                 }
+                $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
                 continue;
             }
 
@@ -124,6 +125,10 @@ class ConfigurableDataExtender {
                         );
                         $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
                     }
+
+                $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+
+
                 } else {
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'];
                 }
@@ -150,6 +155,9 @@ class ConfigurableDataExtender {
                             );
                             $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
                         }
+
+                        $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+
                     }
                 }
             }
