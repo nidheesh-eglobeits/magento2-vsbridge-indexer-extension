@@ -14,22 +14,27 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
 use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
-
+use Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionLabelById;
 
 class ConfigurableDataExtender {
 
     protected $objectManager;
 
-    public function __construct()
-    {
-        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-    }
+    /* @var LoadOptionById $loadOptionById */
+    private $loadOptionById;
 
     /* @var CategoryResource $categoryResource */
     private $categoryResource;
 
     /* variable to cache locale for each store */
     private $storeLocales = [];
+
+    public function __construct( 
+        \Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionById $loadOptionById
+    ){
+        $this->loadOptionById = $loadOptionById;
+        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    }
 
     /**
      * This method will take ES docs prepared by Divante Extension and modify them
@@ -58,6 +63,19 @@ class ConfigurableDataExtender {
         $clones = [];
 
         foreach ($indexData as $product_id => $indexDataItem) {
+
+            // if ($indexDataItem['type_id'] == 'bundle') {
+            //     if ($indexDataItem['product_collection']) {
+            //         $product_collection_option = $this->loadOptionById->execute(
+            //             'product_collection',
+            //             $indexDataItem['product_collection'],
+            //             $storeId
+            //         );
+            //         $indexDataItem['product_collection_label'] = $product_collection_option['label'];
+            //     }
+            //     $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
+            //     continue;
+            // }
 
             if ($indexDataItem['type_id'] !== 'configurable') {
                 continue;
@@ -88,8 +106,29 @@ class ConfigurableDataExtender {
                 $clones[$cloneId] = $indexDataItem;
 
                 if(!empty($indexDataItem['color'])){
-                    $clones[$cloneId]['clone_color_id'] = $indexDataItem['color'];
+                    $clones[$cloneId]['clone_color_id'] = isset($indexDataItem['color']) ? $indexDataItem['color'] : $indexDataItem['configurable_children'][0]['color'];
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'].'-'.$indexDataItem['color'];
+                    $clone_color_option = $this->loadOptionById->execute(
+                        'color',
+                        $clones[$cloneId]['clone_color_id'],
+                        $storeId
+                    );
+                    $clones[$cloneId]['clone_color_label'] = $clone_color_option['label'];
+                    $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
+                    $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$clones[$cloneId]['clone_color_label'];
+
+                    if ($clones[$cloneId]['product_collection']) {
+                        $product_collection_option = $this->loadOptionById->execute(
+                            'product_collection',
+                            $clones[$cloneId]['product_collection'],
+                            $storeId
+                        );
+                        $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                    }
+
+                    $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+
+
                 } else {
                     $clones[$cloneId]['sku'] = $indexDataItem['sku'];
                 }
@@ -108,6 +147,17 @@ class ConfigurableDataExtender {
                         $clones[$cloneId]['is_clone'] = 1;
                         $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
                         $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$color['label'];
+                        if ($clones[$cloneId]['product_collection']) {
+                            $product_collection_option = $this->loadOptionById->execute(
+                                'product_collection',
+                                $clones[$cloneId]['product_collection'],
+                                $storeId
+                            );
+                            $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                        }
+
+                        $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
+
                     }
                 }
             }
