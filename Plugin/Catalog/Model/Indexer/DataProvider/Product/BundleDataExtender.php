@@ -26,10 +26,14 @@ class BundleDataExtender
                 continue;
             }
 
+            // It is not really a clone. However, it will make me so easier to search in PWA
+            $indexData[$product_id]['is_clone'] = 3;
+
             // Add slug_from_name for pretty URLs
             // I did same for Configurables
             // These functions are just equal `slugify`
-            $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
+            // $indexDataItem['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
+            $indexData[$product_id]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $indexDataItem['name'])));
 
             $bundlePrice = $indexDataItem['price'] ?? null;
 
