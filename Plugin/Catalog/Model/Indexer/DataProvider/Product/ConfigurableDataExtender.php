@@ -117,14 +117,14 @@ class ConfigurableDataExtender {
                     $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
                     $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$clones[$cloneId]['clone_color_label'];
 
-                    if ($clones[$cloneId]['product_collection']) {
-                        $product_collection_option = $this->loadOptionById->execute(
-                            'product_collection',
-                            $clones[$cloneId]['product_collection'],
-                            $storeId
-                        );
-                        $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
-                    }
+                    // if ($clones[$cloneId]['product_collection']) {
+                    //     $product_collection_option = $this->loadOptionById->execute(
+                    //         'product_collection',
+                    //         $clones[$cloneId]['product_collection'],
+                    //         $storeId
+                    //     );
+                    //     $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                    // }
 
                     $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
 
@@ -147,14 +147,14 @@ class ConfigurableDataExtender {
                         $clones[$cloneId]['is_clone'] = 1;
                         $clones[$cloneId]['url_key'] = $indexDataItem['url_key'].'?color='.$clone_color;
                         $clones[$cloneId]['clone_name'] = $indexDataItem['name'].' '.$color['label'];
-                        if ($clones[$cloneId]['product_collection']) {
-                            $product_collection_option = $this->loadOptionById->execute(
-                                'product_collection',
-                                $clones[$cloneId]['product_collection'],
-                                $storeId
-                            );
-                            $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
-                        }
+                        // if ($clones[$cloneId]['product_collection']) {
+                        //     $product_collection_option = $this->loadOptionById->execute(
+                        //         'product_collection',
+                        //         $clones[$cloneId]['product_collection'],
+                        //         $storeId
+                        //     );
+                        //     $clones[$cloneId]['product_collection_label'] = $product_collection_option['label'];
+                        // }
 
                         $clones[$cloneId]['slug_from_name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $clones[$cloneId]['clone_name'])));
 
