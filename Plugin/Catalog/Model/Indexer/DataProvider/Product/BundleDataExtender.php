@@ -2,16 +2,42 @@
 
 namespace CodingMice\VsBridgeIndexerExtension\Plugin\Catalog\Model\Indexer\DataProvider\Product;
 
+use CodingMice\VsBridgeIndexerExtension\Model\AdditionalData\CategoryNames;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\BundleOptionsData;
-
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\ObjectManager;
 
 class BundleDataExtender
 {
+    /**
+     * Loaded bundle product ids
+     *
+     * @var array
+     */
+    protected $loadedBundleIds = [];
+
+    /**
+     * Prepare category name
+     *
+     * @var CategoryNames
+     */
+    protected $categoryNames;
+
+    /**
+     * BundleDataExtender constructor.
+     *
+     * @param CategoryNames $categoryNames
+     */
+    public function __construct(CategoryNames $categoryNames)
+    {
+        $this->categoryNames = $categoryNames;
+    }
+
     public function afterAddData(BundleOptionsData $subject, $result, $indexData, $storeId)
     {
         $result = $this->addDiscountAmount($result, $storeId);
+
+        $result = $this->categoryNames->prepareAditionalIndexerData($this->loadedBundleIds, $result, $storeId, 'bundle');
 
         return $result;
     }
@@ -25,6 +51,11 @@ class BundleDataExtender
             if ($indexData[$product_id]['type_id'] != 'bundle') {
                 continue;
             }
+
+            /**
+             * Preparing bundle product ids
+             */
+            $this->loadedBundleIds[] = $product_id;
 
             // It is not really a clone. However, it will make me so easier to search in PWA
             $indexData[$product_id]['is_clone'] = 3;

@@ -2,6 +2,7 @@
 
 namespace CodingMice\VsBridgeIndexerExtension\Plugin\Catalog\Model\Indexer\DataProvider\Product;
 
+use CodingMice\VsBridgeIndexerExtension\Model\AdditionalData\CategoryNames;
 use Divante\VsbridgeIndexerCatalog\Model\ResourceModel\Product\Category as CategoryResource;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\ConfigurableData;
 use Divante\VsbridgeIndexerCatalog\Model\Indexer\DataProvider\Product\MediaGalleryData;
@@ -14,6 +15,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
 use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionLabelById;
 
 class ConfigurableDataExtender {
@@ -29,11 +31,33 @@ class ConfigurableDataExtender {
     /* variable to cache locale for each store */
     private $storeLocales = [];
 
+    /**
+     * Loaded configurable product ids
+     *
+     * @var array
+     */
+    protected $loadedConfigurableIds = [];
+
+    /**
+     * Prepare category name
+     *
+     * @var CategoryNames
+     */
+    protected $categoryNames;
+
+    /**
+     * ConfigurableDataExtender constructor.
+     *
+     * @param \Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionById $loadOptionById
+     * @param CategoryNames $categoryNames
+     */
     public function __construct( 
-        \Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionById $loadOptionById
+        \Divante\VsbridgeIndexerCatalog\Model\Attribute\LoadOptionById $loadOptionById,
+        CategoryNames $categoryNames
     ){
         $this->loadOptionById = $loadOptionById;
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $this->categoryNames = $categoryNames;
     }
 
     /**
@@ -50,6 +74,8 @@ class ConfigurableDataExtender {
         $docs = $this->addHreflangUrls($docs);
 
         $docs = $this->addDiscountAmount($docs, $storeId);
+
+        $docs = $this->categoryNames->prepareAditionalIndexerData($this->loadedConfigurableIds, $docs, $storeId, Configurable::TYPE_CODE);
 
         $docs = $this->cloneConfigurableColors($docs,$storeId);
 
@@ -433,6 +459,11 @@ class ConfigurableDataExtender {
             if ($productTypeID != 'configurable') {
                 continue;
             }
+
+            /**
+             * Preparing configurable product ids
+             */
+            $this->loadedConfigurableIds[] = $product_id;
 
             $configurableDiscountAmount = null;
             if (isset($indexDataItem['final_price']) && isset($indexDataItem['regular_price'])) {

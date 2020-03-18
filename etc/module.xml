@@ -3,6 +3,8 @@
     <module name="CodingMice_VsBridgeIndexerExtension" setup_version="0.1">
         <sequence>
             <module name="Magento_Backend"/>
+            <module name="Divante_VsbridgeIndexerCore"/>
+            <module name="Divante_VsbridgeIndexerCatalog"/>
         </sequence>
     </module>
 </config>
